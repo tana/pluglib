@@ -1,5 +1,5 @@
 use btleplug::{
-    api::{Central as _, CentralEvent, ScanFilter},
+    api::{Central as _, CentralEvent, Peripheral as _, ScanFilter},
     platform::{Adapter, Peripheral},
 };
 use enum_dispatch::enum_dispatch;
@@ -39,16 +39,16 @@ pub trait SmartPlug: Send {
             }
         }
     }
+
+    fn peripheral(&self) -> &Peripheral;
 }
 
-pub trait BleSmartPlug: SmartPlug + Sized {
+pub trait ConcreteSmartPlug: SmartPlug + Sized {
     fn check_event(event: &CentralEvent) -> bool;
 
-    fn connect(
+    fn from_peripheral(
         peripheral: Peripheral,
     ) -> impl std::future::Future<Output = Result<Self, Error>> + Send;
-
-    fn disconnect(self) -> impl std::future::Future<Output = Result<Peripheral, Error>> + Send;
 }
 
 pub async fn scan_and_connect(
@@ -76,7 +76,8 @@ pub async fn scan_and_connect(
                 }
 
                 if switchbot::plug_mini::PlugMini::check_event(&event) {
-                    if let Ok(d) = switchbot::plug_mini::PlugMini::connect(peripheral).await {
+                    peripheral.connect().await?;
+                    if let Ok(d) = switchbot::plug_mini::PlugMini::from_peripheral(peripheral).await {
                         device = Some(d.into());
                         break;
                     }

@@ -1,4 +1,4 @@
-use btleplug::{api::Manager as _, platform::Manager};
+use btleplug::{api::{Manager as _, Peripheral}, platform::Manager};
 use pluglib::SmartPlug;
 
 #[tokio::main]
@@ -18,4 +18,6 @@ async fn main() {
     println!("Connected to {:?}", device);
 
     device.toggle().await.unwrap();
+
+    device.peripheral().disconnect().await.unwrap();
 }

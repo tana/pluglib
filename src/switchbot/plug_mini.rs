@@ -13,7 +13,7 @@ use tokio::task::JoinHandle;
 use tokio_stream::StreamExt;
 use uuid::{uuid, Uuid};
 
-use crate::{BleSmartPlug, SmartPlug};
+use crate::{ConcreteSmartPlug, SmartPlug};
 
 const SVC_DATA_UUID: Uuid = uuid!("0000fd3d-0000-1000-8000-00805f9b34fb");
 const SVC_UUID: Uuid = uuid!("cba20d00-224d-11e6-9fb8-0002a5d5c51b");
@@ -77,9 +77,13 @@ impl SmartPlug for PlugMini {
             }
         }
     }
+
+    fn peripheral(&self) ->  &Peripheral {
+        &self.peripheral
+    }
 }
 
-impl BleSmartPlug for PlugMini {
+impl ConcreteSmartPlug for PlugMini {
     fn check_event(event: &CentralEvent) -> bool {
         match event {
             CentralEvent::ServiceDataAdvertisement {
@@ -90,9 +94,7 @@ impl BleSmartPlug for PlugMini {
         }
     }
 
-    async fn connect(peripheral: Peripheral) -> Result<Self, crate::Error> {
-        peripheral.connect().await?;
-
+    async fn from_peripheral(peripheral: Peripheral) -> Result<Self, crate::Error> {
         peripheral.discover_services().await?;
         let services = peripheral.services();
         let Some(service) = services.iter().find(|s| s.uuid == SVC_UUID) else {
@@ -139,11 +141,6 @@ impl BleSmartPlug for PlugMini {
             notification_task_handle,
             chan_rx,
         })
-    }
-
-    async fn disconnect(self) -> Result<Peripheral, crate::Error> {
-        self.peripheral.disconnect().await?;
-        Ok(self.peripheral)
     }
 }
 
