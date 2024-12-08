@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 btleplug = "0.11.6"
 enum_dispatch = "0.3.13"
+thiserror = "2.0.6"
 tokio = "1.42.0"
 tokio-stream = "0.1.17"
 uuid = "1.11.0"

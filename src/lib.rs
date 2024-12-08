@@ -7,34 +7,12 @@ use tokio_stream::StreamExt as _;
 
 mod switchbot;
 
-#[derive(Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum Error {
+    #[error("protocol error: {0}")]
     Protocol(String),
-    Ble(btleplug::Error),
-}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self {
-            &Error::Protocol(str) => write!(f, "{}", str),
-            &Error::Ble(err) => write!(f, "BLE error: {}", err),
-        }
-    }
-}
-
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match &self {
-            &Error::Ble(err) => Some(err),
-            _ => None,
-        }
-    }
-}
-
-impl From<btleplug::Error> for Error {
-    fn from(value: btleplug::Error) -> Self {
-        Error::Ble(value)
-    }
+    #[error("BLE error: {0}")]
+    Ble(#[from] btleplug::Error),
 }
 
 #[enum_dispatch]
